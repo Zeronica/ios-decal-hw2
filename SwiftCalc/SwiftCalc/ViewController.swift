@@ -21,9 +21,16 @@ class ViewController: UIViewController {
     
     // TODO: This looks like a good place to add some data structures.
     //       One data structure is initialized below for reference.
-    var someDataStructure: [String] = [""]
+    var operators: [String] = []
+    var numbers: [String] = []
+    var expectNum: Bool = true
     
-
+    func cleanSlate() {
+        operators = []
+        numbers = []
+        expectNum = true
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view = UIView(frame: UIScreen.main.bounds)
@@ -36,6 +43,7 @@ class ViewController: UIViewController {
         resultLabel.accessibilityValue = "resultLabel"
         makeButtons()
         // Do any additional setup here.
+        cleanSlate()
     }
     
     override func didReceiveMemoryWarning() {
@@ -43,54 +51,152 @@ class ViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
-    // TODO: A method to update your data structure(s) would be nice.
-    //       Modify this one or create your own.
-    func updateSomeDataStructure(_ content: String) {
-        print("Update me like one of those PCs")
-    }
-    
     // TODO: Ensure that resultLabel gets updated.
     //       Modify this one or create your own.
     func updateResultLabel(_ content: String) {
-        print("Update me like one of those PCs")
+        
+        if content.characters.count > 7 {
+            let index = content.index(content.startIndex, offsetBy: 7)
+            resultLabel.text = content.substring(to: index)
+        } else {
+            resultLabel.text = content
+        }
     }
     
     
     // TODO: A calculate method with no parameters, scary!
     //       Modify this one or create your own.
     func calculate() -> String {
-        return "0"
+        if numbers.count == 1 {
+            return numbers[0]
+        }
+        var i = 1
+        var retVal = numbers[0]
+        for op in operators {
+            if let a = Int(retVal), let b = Int(numbers[i]) {
+                retVal = intCalculate(a: a, b: b, operation: op)
+            } else {
+                retVal = calculate(p_a: retVal, p_b: numbers[i], operation: op)
+            }
+            i += 1
+        }
+        return retVal
     }
     
     // TODO: A simple calculate method for integers.
     //       Modify this one or create your own.
-    func intCalculate(a: Int, b:Int, operation: String) -> Int {
+    func intCalculate(a: Int, b:Int, operation: String) -> String {
         print("Calculation requested for \(a) \(operation) \(b)")
-        return 0
+        switch operation {
+            case "+":
+                return String(a + b)
+            case "*":
+                return String(a * b)
+            case "/":
+                if a % b != 0 {
+                    return calculate(p_a: String(a), p_b: String(b), operation: operation)
+                }
+                return String(a / b)
+            case "-":
+                return String(a - b)
+            default:
+                return String(a % b)
+        }
     }
     
     // TODO: A general calculate method for doubles
     //       Modify this one or create your own.
-    func calculate(a: String, b:String, operation: String) -> Double {
+    func calculate(p_a: String, p_b:String, operation: String) -> String {
+        let a = Double(p_a)!
+        let b = Double(p_b)!
         print("Calculation requested for \(a) \(operation) \(b)")
-        return 0.0
+        switch operation {
+        case "+":
+            return String(a + b)
+        case "*":
+            return String(a * b)
+        case "/":
+            return String(a / b)
+        case "-":
+            return String(a - b)
+        default:
+            return String(a / b)
+        }
     }
     
     // REQUIRED: The responder to a number button being pressed.
     func numberPressed(_ sender: CustomButton) {
         guard Int(sender.content) != nil else { return }
+        
         print("The number \(sender.content) was pressed")
-        // Fill me in!
+        
+        
+        if expectNum {
+            numbers.append(sender.content)
+            expectNum = false
+        } else {
+            numbers[numbers.count - 1] += sender.content
+        }
+        updateResultLabel(numbers[numbers.count - 1])
     }
     
     // REQUIRED: The responder to an operator button being pressed.
     func operatorPressed(_ sender: CustomButton) {
-        // Fill me in!
+        print("The operator \(sender.content) was pressed")
+        
+        if sender.content == "C" {
+            updateResultLabel("0")
+            cleanSlate()
+        }
+        
+        if expectNum {
+            return
+        }
+        
+        switch sender.content {
+            case "+/-":
+                var c = numbers[numbers.count - 1]
+                if (c[c.startIndex] == "-") {
+                    numbers[numbers.count - 1].remove(at: c.startIndex)
+                } else {
+                    print("fdsa")
+                    numbers[numbers.count - 1].insert("-", at: c.startIndex)
+                }
+                updateResultLabel(numbers[numbers.count - 1])
+            default:
+                let r = calculate()
+                updateResultLabel(r)
+                cleanSlate()
+                numbers.append(r)
+                if sender.content != "=" {
+                    operators.append(sender.content)
+                } else {
+                    expectNum = false
+                }
+        }
     }
     
     // REQUIRED: The responder to a number or operator button being pressed.
     func buttonPressed(_ sender: CustomButton) {
-       // Fill me in!
+        print("The button \(sender.content) was pressed")
+        switch sender.content {
+            case ".":
+                if expectNum {
+                    numbers.append("0")
+                    expectNum = false
+                }
+                numbers[numbers.count - 1] += "."
+                updateResultLabel(numbers[numbers.count - 1])
+            case "0":
+                if expectNum {
+                    numbers.append("0")
+                    expectNum = false
+                }
+                numbers[numbers.count - 1] += "0"
+                updateResultLabel(numbers[numbers.count - 1])
+            default:
+                print("lul")
+        }
     }
     
     // IMPORTANT: Do NOT change any of the code below.
@@ -173,4 +279,3 @@ class ViewController: UIViewController {
     }
 
 }
-
